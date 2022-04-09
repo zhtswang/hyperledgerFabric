@@ -18,5 +18,7 @@ Fabric 1.x 版本，具体说来要分成两个阶段。一个是1.4之前的，
 
 ```mermaid
 graph TD;
-A[Fabric Client]-->B[Fabric CA Client]
+A[Fabric Client]-->B[CryptoSuit]
+B-->C[Channel]
+C-->D[Fabric Server]
 ```
