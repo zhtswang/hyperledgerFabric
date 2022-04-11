@@ -16,8 +16,43 @@ Fabric 1.x 版本，具体说来要分成两个阶段。一个是1.4之前的，
 业务逻辑。当然，过多的抽象包装在一定程度上也限制了扩展的自由。特别是在Typescript下，很多类的方法你根本就用不上，尽管他们就在那里。所以，要定制化，就必须对Fabric client SDK
 有深入的了解，不然一步一坑。
 
-首先,先来看一下Fabric SDK中比较重要的一个组件 - Fabric CA Client.为什么重要?因为所有的其它组件的如peer, orderer等的msp都依靠它而产生.Client Application要和整个Fabric network交互,
-也要由它先产生一个合法的身份.
+首先,先来看一下Fabric Client SDK中比较重要的一个组件 - Fabric CA Client.为什么重要?因为所有的其它组件的如peer, orderer等的msp都依靠它而产生.Client Application要和整个Fabric network交互,也要由它先产生一个合法的身份. 那么怎样来友Fabric CA产生一个身份.这里有两个操作,一个是Register,另外一个是Enroll.对于Register来说,它只是一个client调用Server API的过程.
+```
+async register(enrollmentID, enrollmentSecret, role, affiliation, maxEnrollments, attrs, signingIdentity) {
+	// all arguments are required, validate if missing any required parameters
+	if (arguments.length < 7) {
+		throw new Error('Missing required parameters. \'enrollmentID\', \'enrollmentSecret\', \'role\', \'affiliation\', ' +
+			'\'maxEnrollments\', \'attrs\' and \'signingIdentity\' are all required.');
+	}
+	if (typeof maxEnrollments !== 'number') {
+		throw new Error('Parameter \'maxEnrollments\' must be a number');
+	}
+
+	const regRequest = {
+		id: enrollmentID,
+		affiliation,
+		max_enrollments: maxEnrollments
+	};
+
+	if (role) {
+		regRequest.type = role;
+	}
+
+	if (attrs) {
+		regRequest.attrs = attrs;
+	}
+
+	//
+	if (typeof enrollmentSecret === 'string' && enrollmentSecret !== '') {
+		regRequest.secret = enrollmentSecret;
+	}
+
+	const response = await this.post('register', regRequest, signingIdentity);
+	return response.result.secret;
+}
+```
+
+而Enroll的过程,我们可以看一下如下的时序图,可以了解Enroll的过程是怎么实现的.
 
 ```mermaid
 sequenceDiagram
