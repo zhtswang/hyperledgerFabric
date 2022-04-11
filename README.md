@@ -79,3 +79,34 @@ FabricCAService->>FabricCAClient: 3.2 enroll(id, secret, csr)
 FabricCAClient-->>FabricCAService: 3.3 return enrollResponse
 FabricCAService->>FabricCAService: 3.4 return { certificate, privatekey, rootCertificate }
 ```
+再来看一看重构后的Fabric 1.4的整体类图
+```mermaid
+classDiagram
+class Key{
+	+isSymmetric()
+	+getSKI()
+	+getPublicKey()
+	+toBytes()
+}
+class CryptoSuit{
+	+generateKey()
+	+generateEphemeralKey()
+	+createKeyFromRaw()
+	+importKey(pem, opts)
+	+hash()
+	+sign()
+	+verify()
+	+setCryptoKeyStore()
+}
+class KeyValueStore {
+	+getValue()
+	+setVaule()
+}
+Key<|--ECDSAKey
+Key<|--Pkcs11EcdsaKey
+KeyValueStore<|--CryptoKeyStore
+KeyValueStore<|--InMemoryKeyValueStore
+CryptoSuit<|-- CryptoSuit_ECDSA_AES
+CryptoSuit-->CryptoKeyStore
+CryptoSuit_ECDSA_AES..>ECDSAKey
+```
