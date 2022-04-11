@@ -16,9 +16,31 @@ Fabric 1.x 版本，具体说来要分成两个阶段。一个是1.4之前的，
 业务逻辑。当然，过多的抽象包装在一定程度上也限制了扩展的自由。特别是在Typescript下，很多类的方法你根本就用不上，尽管他们就在那里。所以，要定制化，就必须对Fabric client SDK
 有深入的了解，不然一步一坑。
 
+首先,先来看一下Fabric SDK中比较重要的一个组件 - Fabric CA Client.为什么重要?因为所有的其它组件的如peer, orderer等的msp都依靠它而产生.Client Application要和整个Fabric network交互,
+也要由它先产生一个合法的身份.
+
 ```mermaid
-graph TD;
-A[Fabric Client]-->B[CryptoSuit]
-B-->C[Channel]
-C-->D[Fabric Server]
+sequenceDiagram
+FabricCAService->>FabricCAService: 1.initialize constructor(url,tlsOptions,caName, cryptoSuit)
+FabricCAService->>FabricCAClient: 1.1 initialize create one new Fabric CA client
+FabricCAService->>FabricCAService: 2.enroll(enrollRequest)
+FabricCAService->>FabricCAService: check parameters enrollmentID, enrollmentSecret & attr_reqs
+alt 3.0 requst has csr
+	FabricCAService->>FabricCAService: 3.0.1 use the csr to enroll
+else 3.1 genarete csr
+	FabricCAService->>CryptoSuite: 3.1.1 generateKey(opts)
+	CryptoSuite->>CryptoSuite: gernerateKeyPair('EC') pair
+	CryptoSuite->>CryptoSuite: create key = new ECDSAKey(pair.privateKey)
+	alt ephemeral is true
+		note right of CryptoSuite:return the key directly 3.1.2
+	else need persist the key at db or file
+		CryptoSuite->>CryptoKeyStore: store the key by putKey(key)
+	end
+	CryptoSuite-->>FabricCAService: 3.1.2 return private key (ECDSA Key object)
+	FabricCAService->> ECDSA Key: 3.1.3 generateCSR('CN='+enrollmentID)
+	ECDSA Key-->> FabricCAService: 3.1.4 return csr
+end
+FabricCAService->>FabricCAClient: 3.2 enroll(id, secret, csr)
+FabricCAClient-->>FabricCAService: 3.3 return enrollResponse
+FabricCAService->>FabricCAService: 3.4 return { certificate, privatekey, rootCertificate }
 ```
