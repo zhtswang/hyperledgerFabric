@@ -27,22 +27,7 @@ async register(enrollmentID, enrollmentSecret, role, affiliation, maxEnrollments
 	if (typeof maxEnrollments !== 'number') {
 		throw new Error('Parameter \'maxEnrollments\' must be a number');
 	}
-
-	const regRequest = {
-		id: enrollmentID,
-		affiliation,
-		max_enrollments: maxEnrollments
-	};
-
-	if (role) {
-		regRequest.type = role;
-	}
-
-	if (attrs) {
-		regRequest.attrs = attrs;
-	}
-
-	//
+	// 自定义密码或者由CA Server给你生成一个。这个密码将是你enroll时的凭证,使用Basic Authorazation
 	if (typeof enrollmentSecret === 'string' && enrollmentSecret !== '') {
 		regRequest.secret = enrollmentSecret;
 	}
@@ -79,7 +64,7 @@ FabricCAService->>FabricCAClient: 3.2 enroll(id, secret, csr)
 FabricCAClient-->>FabricCAService: 3.3 return enrollResponse
 FabricCAService->>FabricCAService: 3.4 return { certificate, privatekey, rootCertificate }
 ```
-再来看一看重构后的Fabric 1.4的整体类图
+再来看一看重构后的Fabric 1.4对CryptoSuit的整体类图
 ```mermaid
 classDiagram
 class Key{
